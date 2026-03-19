@@ -425,7 +425,8 @@ async function goMenu(mesa) {
   cats.forEach((c,i) => {
     const b = document.createElement('button');
     b.className = 'cat-btn' + (i===0?' active':'');
-    b.textContent = c === 'todos' ? 'TODOS' : c.toUpperCase();
+    const catLabels = {todos:'TODOS', pollo:'POLLO', carta:'CARTA', hamburguesas:'HAMBURGUESAS', menu_dia:'MENÚ DEL DÍA'};
+    b.textContent = catLabels[c] || c.toUpperCase();
     b.dataset.cat = c;
     b.onclick = () => {
       catsBar.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active'));
