@@ -190,15 +190,21 @@ if ($method === 'GET' && $action === 'cocina_check_auth') {
 
 if ($method === 'POST' && $action === 'save_pedido_mesa') {
     reqMesero(); verifyCsrf();
+    $tipo    = ($body['tipo'] ?? 'mesa') === 'llevar' ? 'llevar' : 'mesa';
     $mesa_id = san($body['mesa_id'] ?? '', 50);
-    if (!$mesa_id) respond(['error' => 'Mesa requerida'], 422);
-    $mdata = rjson($D.'mesas.json'); $mesas = $mdata['mesas'] ?? [];
-    if (!is_array($mesas) || isset($mesas['mesas'])) $mesas = [];
-    $mesa = null;
-    foreach ($mesas as $m) {
-        if (($m['id'] ?? '') === $mesa_id && !empty($m['activa'])) { $mesa = $m; break; }
+    $mesa    = null;
+    $mesas   = [];
+
+    if ($tipo === 'mesa') {
+        if (!$mesa_id) respond(['error' => 'Mesa requerida'], 422);
+        $mdata = rjson($D.'mesas.json'); $mesas = $mdata['mesas'] ?? [];
+        if (!is_array($mesas) || isset($mesas['mesas'])) $mesas = [];
+        foreach ($mesas as $m) {
+            if (($m['id'] ?? '') === $mesa_id && !empty($m['activa'])) { $mesa = $m; break; }
+        }
+        if (!$mesa) respond(['error' => 'Mesa no encontrada'], 404);
     }
-    if (!$mesa) respond(['error' => 'Mesa no encontrada'], 404);
+
     $prods = rjson($D.'productos.json');
     $pmap  = []; foreach ($prods as $p) $pmap[$p['id']] = $p;
     $items = []; $total = 0;
@@ -210,20 +216,33 @@ if ($method === 'POST' && $action === 'save_pedido_mesa') {
         $total  += $pmap[$id]['precio'] * $qty;
     }
     if (!$items) respond(['error' => 'Sin productos válidos'], 422);
+
     $pedidos = rjson($D.'pedidos.json');
     $nid     = $pedidos ? max(array_column($pedidos, 'id')) + 1 : 101;
-    $pedido  = ['id'=>$nid,'fecha'=>date('c'),'tipo'=>'mesa',
-                'mesa_id'=>$mesa_id,'mesa_num'=>$mesa['numero']??0,
-                'mesero'=>san($body['mesero']??'Mesero',50),
-                'nota'=>san($body['nota']??'',300),
-                'productos'=>$items,'total'=>$total,'estado'=>'pendiente',
-                'cliente'=>'Mesa '.($mesa['numero']??'?'),'telefono'=>'',
-                'ip'=>md5(get_client_ip())];
-    $pedidos[] = $pedido;
-    foreach ($mesas as &$m) {
-        if ($m['id'] === $mesa_id) { $m['estado'] = 'ocupada'; break; }
+
+    if ($tipo === 'llevar') {
+        $cliente = san($body['cliente'] ?? 'Cliente', 100);
+        $pedido  = ['id'=>$nid,'fecha'=>date('c'),'tipo'=>'llevar',
+                    'mesero'=>san($body['mesero']??'Mesero',50),
+                    'nota'=>san($body['nota']??'',300),
+                    'productos'=>$items,'total'=>$total,'estado'=>'pendiente',
+                    'cliente'=>$cliente,'telefono'=>'',
+                    'ip'=>md5(get_client_ip())];
+    } else {
+        $pedido  = ['id'=>$nid,'fecha'=>date('c'),'tipo'=>'mesa',
+                    'mesa_id'=>$mesa_id,'mesa_num'=>$mesa['numero']??0,
+                    'mesero'=>san($body['mesero']??'Mesero',50),
+                    'nota'=>san($body['nota']??'',300),
+                    'productos'=>$items,'total'=>$total,'estado'=>'pendiente',
+                    'cliente'=>'Mesa '.($mesa['numero']??'?'),'telefono'=>'',
+                    'ip'=>md5(get_client_ip())];
+        foreach ($mesas as &$m) {
+            if ($m['id'] === $mesa_id) { $m['estado'] = 'ocupada'; break; }
+        }
+        wjson($D.'mesas.json', ['mesas' => $mesas]);
     }
-    wjson($D.'mesas.json', ['mesas' => $mesas]);
+
+    $pedidos[] = $pedido;
     wjson($D.'pedidos.json', $pedidos);
     respond(['success'=>true,'id'=>$nid,'total'=>$total]);
 }
