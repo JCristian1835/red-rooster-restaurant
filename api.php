@@ -280,7 +280,7 @@ if ($method === 'POST' && $action === 'update_pedido') {
     reqAuth(); verifyCsrf();
     $id     = intval($body['id'] ?? 0);
     $estado = $body['estado'] ?? '';
-    if (!in_array($estado, ['pendiente','preparando','listo','entregado','cancelado'])) respond(['error'=>'Estado inválido'],400);
+    if (!in_array($estado, ['pendiente','preparando','listo','entregado','pagado','cancelado'])) respond(['error'=>'Estado inválido'],400);
     $pedidos = rjson($D.'pedidos.json');
     foreach ($pedidos as &$p) { if ($p['id'] === $id) { $p['estado'] = $estado; break; } }
     wjson($D.'pedidos.json', $pedidos);
@@ -1011,6 +1011,67 @@ if ($method === 'POST' && $action === 'actualizar_reserva') {
     if(!$found) respond(['error'=>'Reserva no encontrada'],404);
     wjson($D.'reservas.json',['reservas'=>$res]);
     respond(['success'=>true]);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MÓDULO CUENTAS ABIERTAS
+// ══════════════════════════════════════════════════════════════════════════════
+
+if ($method === 'GET' && $action === 'get_cuentas_abiertas') {
+    reqAuth();
+    $pedidos = rjson($D.'pedidos.json');
+    $abiertas = array_values(array_filter($pedidos, fn($p) =>
+        ($p['tipo'] ?? '') === 'mesa' &&
+        !in_array($p['estado'] ?? '', ['pagado', 'cancelado'])
+    ));
+    usort($abiertas, fn($a, $b) => strcmp($a['fecha'] ?? '', $b['fecha'] ?? ''));
+    respond(['success' => true, 'cuentas' => $abiertas]);
+}
+
+if ($method === 'POST' && $action === 'cerrar_cuenta') {
+    reqAuth(); verifyCsrf();
+    $pedido_id = intval($body['pedido_id'] ?? 0);
+    $metodo    = $body['metodo'] ?? 'efectivo';
+    if (!in_array($metodo, ['efectivo','tarjeta','nequi','breb'])) respond(['error'=>'Método inválido'], 422);
+
+    // Marcar pedido como pagado
+    $pedidos = rjson($D.'pedidos.json');
+    $pedido  = null;
+    foreach ($pedidos as &$p) {
+        if ($p['id'] !== $pedido_id) continue;
+        $p['estado']    = 'pagado';
+        $p['pagado_en'] = date('c');
+        $p['metodo_pago'] = $metodo;
+        $pedido = $p;
+        break;
+    }
+    if (!$pedido) respond(['error' => 'Pedido no encontrado'], 404);
+    wjson($D.'pedidos.json', $pedidos);
+
+    // Liberar mesa
+    $mdata = rjson($D.'mesas.json'); $mesas = $mdata['mesas'] ?? [];
+    foreach ($mesas as &$m) {
+        if (($m['id'] ?? '') === ($pedido['mesa_id'] ?? '')) {
+            $m['estado'] = 'disponible'; break;
+        }
+    }
+    wjson($D.'mesas.json', ['mesas' => $mesas]);
+
+    // Registrar en caja si hay turno abierto
+    $caja   = rjson($D.'caja.json');
+    $turnos = $caja['turnos'] ?? [];
+    $idx    = turnoAbierto($turnos);
+    if ($idx !== -1) {
+        $tx = ['id'=>'tx_'.time().'_'.substr(uniqid(),-4),'hora'=>date('H:i'),'fecha'=>date('Y-m-d'),
+               'concepto'=>'Mesa '.($pedido['mesa_num']??'?').' — '.implode(', ', array_map(fn($i)=>$i['qty'].'x '.$i['nombre'], $pedido['productos']??[])),
+               'metodo'=>$metodo,'monto'=>intval($pedido['total']??0),'tipo'=>'ingreso',
+               'referencia'=>'','pedido_id'=>$pedido_id];
+        $turnos[$idx]['transacciones'][] = $tx;
+        $turnos[$idx]['totales'] = calcTotales($turnos[$idx]['transacciones']);
+        wjson($D.'caja.json', ['turnos'=>$turnos]);
+    }
+
+    respond(['success' => true, 'en_caja' => $idx !== -1]);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

@@ -330,6 +330,25 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .descanso-badge{background:rgba(232,160,32,.15);border:1px solid rgba(232,160,32,.3);color:var(--gold);font-size:10px;letter-spacing:1px;padding:2px 8px;text-transform:uppercase;}
 @media(max-width:900px){.charts-grid{grid-template-columns:1fr;}}
 
+/* ── CUENTAS ABIERTAS ───────────────────────────────────── */
+.cuentas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px;}
+.cuenta-card{background:var(--card);border:2px solid var(--border);border-radius:4px;overflow:hidden;transition:border-color .2s;}
+.cuenta-card.listo{border-color:#22c55e;}
+.cuenta-card.entregado{border-color:#22c55e;}
+.cuenta-card.preparando{border-color:#3b82f6;}
+.cuenta-card.pendiente{border-color:var(--gold);}
+.cuenta-header{background:var(--ash);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;}
+.cuenta-mesa{font-family:'Heartbreaking',cursive;font-size:28px;color:var(--white);line-height:1;}
+.cuenta-meta{text-align:right;font-size:11px;color:var(--gray);letter-spacing:1px;line-height:1.6;}
+.cuenta-items{padding:10px 14px;font-size:13px;color:var(--white);line-height:1.8;border-bottom:1px solid var(--border);}
+.cuenta-footer{padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.cuenta-total{font-family:'BigNoodle',sans-serif;font-size:22px;color:var(--gold);letter-spacing:1px;}
+.cobrar-wrap{display:flex;gap:6px;align-items:center;}
+.cobrar-metodo{background:var(--ash);border:1px solid var(--border);color:var(--white);font-family:'BigNoodle',sans-serif;font-size:12px;padding:6px 8px;cursor:pointer;letter-spacing:1px;}
+.btn-cobrar{background:#22c55e;border:none;color:var(--black);font-family:'BigNoodle',sans-serif;font-size:13px;letter-spacing:2px;padding:8px 14px;cursor:pointer;transition:opacity .2s;white-space:nowrap;}
+.btn-cobrar:hover{opacity:.85;}
+.cuentas-empty{padding:20px;text-align:center;color:var(--gray);font-size:12px;letter-spacing:2px;border:1px dashed var(--border);margin-bottom:24px;}
+
 /* ── MÓDULO 01 — CAJA ─────────────────────────────────── */
 .caja-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;}
 .caja-card{background:var(--card);border:1px solid var(--border);padding:20px;position:relative;}
@@ -497,6 +516,12 @@ tr:hover td{background:rgba(255,255,255,.02);}
   <!-- ══ MÓDULO 01 — CAJA ══ -->
   <div class="page" id="page-caja">
     <div class="page-header">
+      <div><div class="page-title">Cuentas Abiertas</div><div class="page-sub">Mesas con pedidos pendientes de cobro</div></div>
+      <button class="btn btn-ash btn-sm" onclick="loadCuentas()">↺ Actualizar</button>
+    </div>
+    <div id="cuentas-container"><div class="cuentas-empty">CARGANDO...</div></div>
+
+    <div class="page-header" style="margin-top:8px;">
       <div><div class="page-title">Control de Caja</div><div class="page-sub" id="caja-fecha"></div></div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-ash btn-sm" onclick="exportCajaCSV()">↓ CSV</button>
@@ -2071,9 +2096,61 @@ let tipoActual   = 'ingreso';
 
 async function loadCaja() {
   try {
-    const d = await api('get_turno');
-    turnoActivo = d.turno;
+    const [turnoData] = await Promise.all([api('get_turno'), loadCuentas()]);
+    turnoActivo = turnoData.turno;
     renderCaja();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+async function loadCuentas() {
+  try {
+    const d = await api('get_cuentas_abiertas');
+    renderCuentas(d.cuentas || []);
+  } catch(e) {}
+}
+
+function renderCuentas(cuentas) {
+  const c = document.getElementById('cuentas-container');
+  if (!cuentas.length) {
+    c.innerHTML = '<div class="cuentas-empty">✓ SIN CUENTAS ABIERTAS</div>';
+    return;
+  }
+  const estadoLabel = {pendiente:'En espera',preparando:'Preparando',listo:'¡Listo!',entregado:'Entregado'};
+  const metodos = [{v:'efectivo',l:'💵 Efectivo'},{v:'tarjeta',l:'💳 Tarjeta'},{v:'nequi',l:'📱 Nequi'},{v:'breb',l:'🔑 BREB'}];
+  c.innerHTML = '<div class="cuentas-grid">' + cuentas.map(p => {
+    const mins = Math.floor((Date.now() - new Date(p.fecha)) / 60000);
+    const tiempoStr = mins < 1 ? 'Ahora' : `hace ${mins} min`;
+    const items = (p.productos||[]).map(i => `${i.qty}× ${i.nombre}`).join(' · ');
+    const opts  = metodos.map(m => `<option value="${m.v}">${m.l}</option>`).join('');
+    return `<div class="cuenta-card ${p.estado}">
+      <div class="cuenta-header">
+        <div class="cuenta-mesa">Mesa ${p.mesa_num||'?'}</div>
+        <div class="cuenta-meta">
+          <div>${tiempoStr}</div>
+          <div>${p.mesero||''}</div>
+          <div>#${p.id} · ${estadoLabel[p.estado]||p.estado}</div>
+        </div>
+      </div>
+      <div class="cuenta-items">${items}${p.nota?`<div style="color:var(--gold);font-size:11px;margin-top:4px;">📝 ${p.nota}</div>`:''}</div>
+      <div class="cuenta-footer">
+        <div class="cuenta-total">$${p.total.toLocaleString('es-CO')}</div>
+        <div class="cobrar-wrap">
+          <select class="cobrar-metodo" id="metodo-${p.id}">${opts}</select>
+          <button class="btn-cobrar" onclick="cobrarCuenta(${p.id})">COBRAR</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('') + '</div>';
+}
+
+async function cobrarCuenta(pedidoId) {
+  const metodo = document.getElementById('metodo-' + pedidoId)?.value || 'efectivo';
+  try {
+    const r = await api('cerrar_cuenta', {pedido_id: pedidoId, metodo});
+    if (r.success) {
+      toast(r.en_caja ? 'Cuenta cobrada y registrada en caja ✓' : 'Cuenta cobrada (sin turno activo)');
+      await loadCaja();
+    } else { toast(r.error || 'Error al cobrar', 'err'); }
   } catch(e) { toast(e.message, 'err'); }
 }
 
