@@ -14,8 +14,8 @@ define('ADMIN_USER', 'redrooster');
 
 // Hash bcrypt de la contraseña — NUNCA guardes la contraseña en texto plano.
 // Para regenerar: php -r "echo password_hash('nueva_contrasena', PASSWORD_BCRYPT);"
-define('ADMIN_PASS_HASH', '$2y$12$eImiTXuWVxfM37uY4JANjOe7Kd4b5MOEOsmW.jvLI3YNxbTPFsR6i');
-// La contraseña por defecto es: 3R2026admin
+define('ADMIN_PASS_HASH', '$2y$10$IhHQbZ/qx1VRXl2Ya/HEgOZCVTk1w2QZuibcJ8fjjwia7pzjkMgqa');
+// La contraseña por defecto es: Abundance26!
 // CAMBIA ESTO ANTES DE SUBIR AL SERVIDOR
 
 // ── Sesión ─────────────────────────────────────────────────────────────────────
