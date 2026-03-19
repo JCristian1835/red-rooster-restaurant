@@ -906,7 +906,7 @@ if ($method === 'GET' && $action === 'get_asistencias') {
 // ══════════════════════════════════════════════════════════════════════════════
 
 if ($method === 'GET' && $action === 'get_mesas') {
-    reqAuth();
+    reqMesero();
     $data=rjson($D.'mesas.json'); $mesas=$data['mesas']??$data;
     if(!is_array($mesas)||isset($mesas['mesas'])) $mesas=[];
     $rdata=rjson($D.'reservas.json'); $res=$rdata['reservas']??$rdata;
