@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menú — Red Rooster Restaurant</title>
+<meta name="description" content="Menú digital Red Rooster Restaurant. Pollo BBQ en Suba Fontanar, Bogotá.">
+<style>
+@font-face { font-family:'BigNoodle'; src:url('assets/fonts/big_noodle_titling.ttf') format('truetype'); }
+@font-face { font-family:'BigNoodleOblique'; src:url('assets/fonts/big_noodle_titling_oblique.ttf') format('truetype'); }
+@font-face { font-family:'Heartbreaking'; src:url('assets/fonts/heartbreaking.otf') format('opentype'); }
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --red:#CC1212; --red-dark:#8B0000; --gold:#E8A020; --gold-dark:#C8860A;
+  --black:#0D0D0D; --smoke:#1A1A1A; --ash:#2A2A2A; --gray:#888; --white:#FFFFFF;
+  --font-display:'BigNoodle',sans-serif;
+  --font-oblique:'BigNoodleOblique',sans-serif;
+  --font-brand:'Heartbreaking',cursive;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--white);font-family:var(--font-display);min-height:100vh;overflow-x:hidden;}
+
+/* ── NOISE TEXTURE ── */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:.4;}
+
+/* ── TOP BAR ── */
+.topbar{position:sticky;top:0;z-index:100;background:rgba(13,13,13,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--ash);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+.topbar-brand img{height:36px;filter:drop-shadow(0 0 6px rgba(204,18,18,.5));}
+.topbar-brand span{font-family:var(--font-brand);font-size:26px;color:var(--white);letter-spacing:1px;}
+.cart-btn{display:flex;align-items:center;gap:8px;background:var(--red);border:none;color:var(--white);font-family:var(--font-display);font-size:14px;letter-spacing:2px;padding:8px 16px;cursor:pointer;transition:background .2s;position:relative;}
+.cart-btn:hover{background:var(--red-dark);}
+.cart-count{background:var(--gold);color:var(--black);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;}
+
+/* ── HERO STRIP ── */
+.promo-banner{background:var(--gold);padding:8px 20px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;}
+.promo-banner-item{font-family:var(--font-display);font-size:12px;letter-spacing:2px;color:var(--black);text-transform:uppercase;display:flex;align-items:center;gap:6px;}
+.promo-banner-item span{background:var(--red);color:var(--white);padding:1px 8px;font-size:10px;}
+.hero-strip{background:var(--red);padding:16px 20px;text-align:center;position:relative;overflow:hidden;}
+.hero-strip::before{content:'★  SUBA FONTANAR, BOGOTÁ  ★  3043987213  ★  DOMICILIOS DISPONIBLES  ★  SUBA FONTANAR, BOGOTÁ  ★';position:absolute;white-space:nowrap;font-family:var(--font-display);font-size:11px;letter-spacing:3px;color:rgba(255,255,255,.4);top:50%;transform:translateY(-50%);animation:marquee 20s linear infinite;}
+@keyframes marquee{0%{left:100%;}100%{left:-200%;}}
+.hero-strip h1{font-family:var(--font-brand);font-size:clamp(36px,8vw,72px);color:var(--white);text-shadow:3px 3px 0 var(--red-dark);position:relative;z-index:1;}
+.hero-strip p{font-size:13px;letter-spacing:3px;color:rgba(255,255,255,.7);margin-top:4px;position:relative;z-index:1;}
+
+/* ── CATEGORIES ── */
+.cats{display:flex;gap:0;overflow-x:auto;border-bottom:2px solid var(--ash);scrollbar-width:none;position:sticky;top:58px;z-index:90;background:var(--black);}
+.cats::-webkit-scrollbar{display:none;}
+.cat-btn{font-family:var(--font-display);font-size:13px;letter-spacing:2px;color:var(--gray);padding:14px 22px;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;text-transform:uppercase;}
+.cat-btn:hover{color:var(--white);}
+.cat-btn.active{color:var(--red);border-bottom-color:var(--red);}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:30px 16px 120px;}
+.section{display:none;}
+.section.active{display:block;}
+.section-header{margin-bottom:24px;}
+.section-title{font-family:var(--font-display);font-size:clamp(32px,6vw,56px);color:var(--white);letter-spacing:3px;}
+.section-sub{font-size:12px;letter-spacing:3px;color:var(--gray);margin-top:4px;}
+.rule{height:2px;background:linear-gradient(90deg,var(--red),transparent);margin:10px 0 24px;}
+
+/* ── PRODUCT GRID ── */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+
+.card{background:var(--smoke);border:1px solid var(--ash);border-left:4px solid var(--red);padding:18px;position:relative;transition:transform .2s,box-shadow .2s;cursor:pointer;}
+.card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(204,18,18,.2);}
+.card.gold{border-left-color:var(--gold);}
+.card.gold:hover{box-shadow:0 8px 24px rgba(232,160,32,.2);}
+.card.inactive{opacity:.4;pointer-events:none;}
+
+.card-tag{position:absolute;top:14px;right:14px;background:var(--red);color:var(--white);font-family:var(--font-display);font-size:9px;letter-spacing:2px;padding:2px 8px;text-transform:uppercase;}
+.card-tag.gold{background:var(--gold);color:var(--black);}
+.card-emoji{font-size:28px;margin-bottom:8px;display:block;}
+.card-name{font-family:var(--font-display);font-size:20px;letter-spacing:2px;color:var(--white);text-transform:uppercase;}
+.card-desc{font-size:12px;color:var(--gray);line-height:1.5;margin:6px 0 10px;}
+.card-includes{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;}
+.pill{background:var(--ash);font-family:var(--font-display);font-size:10px;letter-spacing:1px;color:#aaa;padding:2px 8px;}
+.card-price{font-family:var(--font-display);font-size:30px;color:var(--red);letter-spacing:2px;}
+.card-price.gold{color:var(--gold);}
+
+/* ── QUANTITY CONTROL ── */
+.qty-row{display:flex;align-items:center;gap:10px;margin-top:12px;}
+.qty-btn{width:32px;height:32px;background:var(--ash);border:1px solid #444;color:var(--white);font-size:18px;font-family:var(--font-display);cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;}
+.qty-btn:hover{background:var(--red);}
+.qty-num{font-family:var(--font-display);font-size:20px;color:var(--white);min-width:28px;text-align:center;letter-spacing:2px;}
+.add-btn{flex:1;background:var(--red);border:none;color:var(--white);font-family:var(--font-display);font-size:12px;letter-spacing:2px;padding:8px 12px;cursor:pointer;transition:background .2s;text-transform:uppercase;}
+.add-btn:hover{background:var(--red-dark);}
+.add-btn.added{background:var(--gold);color:var(--black);}
+
+/* ── CART DRAWER ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.drawer{position:fixed;right:0;top:0;bottom:0;width:min(420px,100vw);background:var(--smoke);border-left:1px solid var(--ash);z-index:201;transform:translateX(100%);transition:transform .3s ease;display:flex;flex-direction:column;}
+.drawer.open{transform:translateX(0);}
+.drawer-head{padding:20px;border-bottom:1px solid var(--ash);display:flex;align-items:center;justify-content:space-between;}
+.drawer-head h2{font-family:var(--font-display);font-size:32px;color:var(--white);letter-spacing:3px;}
+.close-btn{background:none;border:none;color:var(--gray);font-size:24px;cursor:pointer;transition:color .2s;}
+.close-btn:hover{color:var(--white);}
+.drawer-items{flex:1;overflow-y:auto;padding:16px;}
+.drawer-empty{text-align:center;padding:60px 20px;color:var(--gray);}
+.drawer-empty span{font-size:48px;display:block;margin-bottom:12px;}
+.drawer-empty p{font-family:var(--font-display);letter-spacing:2px;font-size:13px;}
+
+.cart-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--ash);}
+.ci-emoji{font-size:24px;width:36px;text-align:center;}
+.ci-info{flex:1;}
+.ci-name{font-family:var(--font-display);font-size:14px;letter-spacing:1px;color:var(--white);text-transform:uppercase;}
+.ci-price{font-family:var(--font-display);font-size:13px;color:var(--gold);margin-top:2px;}
+.ci-qty{display:flex;align-items:center;gap:6px;}
+.ci-qty button{width:26px;height:26px;background:var(--ash);border:1px solid #444;color:var(--white);font-size:14px;cursor:pointer;transition:background .15s;}
+.ci-qty button:hover{background:var(--red);}
+.ci-qty span{font-family:var(--font-display);font-size:16px;color:var(--white);min-width:22px;text-align:center;}
+.ci-remove{background:none;border:none;color:#555;font-size:18px;cursor:pointer;transition:color .2s;}
+.ci-remove:hover{color:var(--red);}
+
+/* ── ORDER FORM ── */
+.drawer-form{padding:16px;border-top:1px solid var(--ash);}
+.total-line{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;}
+.total-label{font-family:var(--font-display);font-size:13px;letter-spacing:2px;color:var(--gray);text-transform:uppercase;}
+.total-amount{font-family:var(--font-display);font-size:36px;color:var(--gold);letter-spacing:2px;}
+.field{margin-bottom:12px;}
+.field label{font-family:var(--font-display);font-size:11px;letter-spacing:2px;color:var(--gray);text-transform:uppercase;display:block;margin-bottom:5px;}
+.field input,.field textarea{width:100%;background:var(--ash);border:1px solid #444;color:var(--white);padding:10px 12px;font-family:var(--font-display);font-size:14px;letter-spacing:1px;outline:none;transition:border-color .2s;}
+.field input:focus,.field textarea:focus{border-color:var(--red);}
+.field input::placeholder,.field textarea::placeholder{color:#555;}
+.field textarea{resize:none;height:60px;}
+
+.wa-btn{width:100%;background:#25D366;border:none;color:var(--white);font-family:var(--font-display);font-size:16px;letter-spacing:3px;padding:16px;cursor:pointer;transition:background .2s;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:10px;}
+.wa-btn:hover{background:#1aa84f;}
+.wa-btn:disabled{background:#444;cursor:not-allowed;}
+.wa-icon{width:22px;height:22px;}
+
+.error-msg{font-family:var(--font-display);font-size:11px;letter-spacing:1px;color:var(--red);margin-top:4px;display:none;}
+.field.has-error input{border-color:var(--red);}
+.field.has-error .error-msg{display:block;}
+
+/* ── FLOATING CART ── */
+.float-cart{position:fixed;bottom:24px;right:24px;z-index:150;display:none;}
+.float-cart.visible{display:flex;}
+.float-cart-inner{background:var(--red);color:var(--white);border:none;font-family:var(--font-display);font-size:13px;letter-spacing:2px;padding:14px 20px;cursor:pointer;box-shadow:0 4px 20px rgba(204,18,18,.4);display:flex;align-items:center;gap:10px;transition:background .2s;}
+.float-cart-inner:hover{background:var(--red-dark);}
+.float-badge{background:var(--gold);color:var(--black);border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:40px 20px;border-top:1px solid var(--ash);margin-top:40px;}
+.footer img{height:50px;opacity:.6;margin-bottom:10px;}
+.footer p{font-size:11px;letter-spacing:2px;color:var(--gray);}
+
+/* ── RESPONSIVE ── */
+@media(max-width:480px){
+  .topbar-brand span{font-size:20px;}
+  .main{padding:20px 12px 100px;}
+  .grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<nav class="topbar" role="navigation" aria-label="Navegación menú">
+  <a href="index.html" class="topbar-brand">
+    <img src="assets/images/3rgallo_transparent.png" alt="Red Rooster Logo">
+    <span>Red Rooster</span>
+  </a>
+  <button class="cart-btn" onclick="toggleCart()" aria-label="Ver carrito">
+    🛒 CARRITO
+    <span class="cart-count" id="cartCount">0</span>
+  </button>
+</nav>
+
+<!-- HERO STRIP -->
+<div class="promo-banner" id="promoBanner" style="display:none;"></div>
+<div class="hero-strip">
+  <h1>Nuestro Menú</h1>
+  <p>★ SUBA FONTANAR, BOGOTÁ ★</p>
+</div>
+
+<!-- CATEGORIES -->
+<div class="cats" role="tablist" aria-label="Categorías del menú" id="catBar">
+  <button class="cat-btn active" onclick="showCat('pollo',this)" role="tab" aria-selected="true">🍗 Pollo</button>
+  <button class="cat-btn" onclick="showCat('carta',this)" role="tab" aria-selected="false">🥩 Platos a la Carta</button>
+  <button class="cat-btn" onclick="showCat('hamburguesas',this)" role="tab" aria-selected="false">🍔 Hamburguesas</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<main class="main" id="main">
+  <div id="menu-loading" style="text-align:center;padding:60px;color:var(--gray);font-family:var(--font-display);letter-spacing:3px;font-size:14px;">
+    CARGANDO MENÚ...
+  </div>
+</main>
+
+<!-- FLOATING CART -->
+<div class="float-cart" id="floatCart" aria-live="polite">
+  <button class="float-cart-inner" onclick="toggleCart()" aria-label="Abrir carrito">
+    🛒 VER PEDIDO
+    <span class="float-badge" id="floatCount">0</span>
+  </button>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="toggleCart()"></div>
+
+<!-- CART DRAWER -->
+<aside class="drawer" id="drawer" aria-label="Carrito de pedido" role="complementary">
+  <div class="drawer-head">
+    <h2>Tu Pedido</h2>
+    <button class="close-btn" onclick="toggleCart()" aria-label="Cerrar carrito">✕</button>
+  </div>
+
+  <div class="drawer-items" id="drawerItems">
+    <div class="drawer-empty">
+      <span>🍗</span>
+      <p>TU CARRITO ESTÁ VACÍO</p>
+    </div>
+  </div>
+
+  <div class="drawer-form" id="drawerForm">
+    <div class="total-line">
+      <span class="total-label">Total</span>
+      <span class="total-amount" id="totalAmount">$0</span>
+    </div>
+
+    <div class="field" id="fieldNombre">
+      <label for="inputNombre">Nombre *</label>
+      <input type="text" id="inputNombre" placeholder="Tu nombre" autocomplete="name">
+      <span class="error-msg">Por favor ingresa tu nombre</span>
+    </div>
+
+    <div class="field" id="fieldTel">
+      <label for="inputTel">Teléfono *</label>
+      <input type="tel" id="inputTel" placeholder="300 000 0000" autocomplete="tel">
+      <span class="error-msg">Por favor ingresa tu teléfono</span>
+    </div>
+
+    <div class="field" id="fieldDir">
+      <label for="inputDir">Dirección</label>
+      <input type="text" id="inputDir" placeholder="Tu dirección (domicilio)" autocomplete="street-address">
+    </div>
+
+    <div class="field">
+      <label for="inputNota">Nota (opcional)</label>
+      <textarea id="inputNota" placeholder="Sin cebolla, extra salsa..."></textarea>
+    </div>
+
+    <button class="wa-btn" id="waBtn" onclick="sendOrder()">
+      <svg class="wa-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      ENVIAR PEDIDO
+    </button>
+  </div>
+</aside>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <img src="assets/images/3rgallo_transparent.png" alt="Red Rooster">
+  <p>RED ROOSTER RESTAURANT · SUBA FONTANAR, BOGOTÁ</p>
+  <p style="margin-top:6px;">304 398 7213 · @redroosterrestaurant.3r</p>
+</footer>
+
+<script>
+// ── STATE ──
+let productos = [];
+let cart = {}; // {id: {producto, qty}}
+let currentCat = 'pollo';
+
+// ── PROMOS BANNER ──
+async function loadPromosBanner() {
+  try {
+    const res = await fetch('api.php?action=get_promos_activas');
+    const data = await res.json();
+    const promos = data.promos || [];
+    if (!promos.length) return;
+    const banner = document.getElementById('promoBanner');
+    banner.innerHTML = promos.map(p => {
+      const desc = p.tipo === 'porcentaje' ? p.valor + '% OFF' : '-$' + p.valor.toLocaleString('es-CO');
+      return `<div class="promo-banner-item">🏷️ ${p.nombre} <span>${desc}</span></div>`;
+    }).join('<span style="color:rgba(0,0,0,.3);">·</span>');
+    banner.style.display = 'flex';
+  } catch(e) {}
+}
+
+// ── LOAD PRODUCTS ──
+async function loadProductos() {
+  try {
+    const res = await fetch('api.php?action=menu');
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    productos = data.productos || [];
+    if (!productos.length) throw new Error('sin productos');
+  } catch(e) {
+    console.warn('API no disponible:', e.message);
+    productos = [];
+  }
+  renderMenu();
+  // Auto-seleccionar categoría por URL param
+  const params = new URLSearchParams(window.location.search);
+  const catParam = params.get('cat');
+  if (catParam) {
+    const btn = document.querySelector(`.cat-btn[onclick*="'${catParam}'"]`);
+    if (btn) showCat(catParam, btn);
+  }
+}
+
+// ── RENDER MENU ──
+function renderMenu() {
+  const loading = document.getElementById('menu-loading');
+  if (loading) loading.remove();
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+
+  const cats = ['pollo','carta','hamburguesas'];
+  const catNames = {pollo:'Pollo',carta:'Platos a la Carta',hamburguesas:'Hamburguesas'};
+  const catSubs = {pollo:'Con papa, plátano, arepas y más',carta:'Todo el sabor de Red Rooster',hamburguesas:'Con papas y gaseosa incluidas'};
+  const isGold = {};
+
+  cats.forEach(cat => {
+    const prods = productos.filter(p => p.categoria === cat);
+    if(!prods.length) return;
+
+    const sec = document.createElement('div');
+    sec.className = 'section' + (cat === 'pollo' ? ' active' : '');
+    sec.id = 'sec-' + cat;
+    sec.setAttribute('role','tabpanel');
+
+    sec.innerHTML = `
+      <div class="section-header">
+        <h2 class="section-title">${catNames[cat]}</h2>
+        <p class="section-sub">${catSubs[cat]}</p>
+        <div class="rule"></div>
+      </div>
+      <div class="grid" id="grid-${cat}"></div>
+    `;
+    main.appendChild(sec);
+
+    const grid = sec.querySelector('.grid');
+    prods.forEach(p => {
+      const gold = isGold[cat] || false;
+      const card = document.createElement('div');
+      card.className = 'card' + (gold?' gold':'') + (!p.activo?' inactive':'');
+      card.id = 'card-' + p.id;
+
+      const incluye = p.incluye ? `<div class="card-includes">${p.incluye.map(i=>`<span class="pill">${i}</span>`).join('')}</div>` : '';
+      const tag = p.tag ? `<span class="card-tag ${gold?'gold':''}">${p.tag}</span>` : '';
+
+      card.innerHTML = `
+        ${tag}
+        <span class="card-emoji">${p.emoji}</span>
+        <div class="card-name">${p.nombre}</div>
+        <div class="card-desc">${p.descripcion}</div>
+        ${incluye}
+        <div class="card-price ${gold?'gold':''}">$${p.precio.toLocaleString('es-CO')}</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="changeQty(${p.id},-1)" aria-label="Reducir cantidad">−</button>
+          <span class="qty-num" id="qty-${p.id}">0</span>
+          <button class="qty-btn" onclick="changeQty(${p.id},1)" aria-label="Aumentar cantidad">+</button>
+          <button class="add-btn" id="addbtn-${p.id}" onclick="addToCart(${p.id})">AGREGAR</button>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  });
+}
+
+// ── CATEGORY SWITCH ──
+function showCat(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.cat-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+  const sec = document.getElementById('sec-' + cat);
+  if(sec) sec.classList.add('active');
+  btn.classList.add('active');
+  btn.setAttribute('aria-selected','true');
+  window.scrollTo({top: document.querySelector('.cats').offsetTop - 60, behavior:'smooth'});
+}
+
+// ── QTY CONTROL ──
+function changeQty(id, delta) {
+  const el = document.getElementById('qty-' + id);
+  let val = parseInt(el.textContent) + delta;
+  if(val < 0) val = 0;
+  el.textContent = val;
+}
+
+// ── ADD TO CART ──
+function addToCart(id) {
+  const qty = parseInt(document.getElementById('qty-' + id).textContent);
+  if(qty === 0) {
+    // If qty 0, add 1
+    document.getElementById('qty-' + id).textContent = '1';
+    return addToCart(id);
+  }
+  const prod = productos.find(p => p.id === id);
+  if(!prod) return;
+
+  if(cart[id]) {
+    cart[id].qty += qty;
+  } else {
+    cart[id] = { producto: prod, qty };
+  }
+
+  // Reset qty display
+  document.getElementById('qty-' + id).textContent = '0';
+
+  // Flash button
+  const btn = document.getElementById('addbtn-' + id);
+  btn.textContent = '✓ AGREGADO';
+  btn.classList.add('added');
+  setTimeout(() => { btn.textContent = 'AGREGAR'; btn.classList.remove('added'); }, 1200);
+
+  updateCartUI();
+}
+
+// ── UPDATE CART UI ──
+function updateCartUI() {
+  const items = Object.values(cart).filter(i => i.qty > 0);
+  const total = items.reduce((s, i) => s + i.producto.precio * i.qty, 0);
+  const count = items.reduce((s, i) => s + i.qty, 0);
+
+  // Update counts
+  document.getElementById('cartCount').textContent = count;
+  document.getElementById('floatCount').textContent = count;
+  document.getElementById('totalAmount').textContent = '$' + total.toLocaleString('es-CO');
+
+  // Show/hide float cart
+  document.getElementById('floatCart').classList.toggle('visible', count > 0);
+
+  // Render drawer items
+  const container = document.getElementById('drawerItems');
+  if(items.length === 0) {
+    container.innerHTML = `<div class="drawer-empty"><span>🍗</span><p>TU CARRITO ESTÁ VACÍO</p></div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(item => `
+    <div class="cart-item">
+      <span class="ci-emoji">${item.producto.emoji}</span>
+      <div class="ci-info">
+        <div class="ci-name">${item.producto.nombre}</div>
+        <div class="ci-price">$${(item.producto.precio * item.qty).toLocaleString('es-CO')}</div>
+      </div>
+      <div class="ci-qty">
+        <button onclick="updateCartQty(${item.producto.id},-1)" aria-label="Reducir">−</button>
+        <span>${item.qty}</span>
+        <button onclick="updateCartQty(${item.producto.id},1)" aria-label="Aumentar">+</button>
+      </div>
+      <button class="ci-remove" onclick="removeFromCart(${item.producto.id})" aria-label="Eliminar">✕</button>
+    </div>
+  `).join('');
+}
+
+function updateCartQty(id, delta) {
+  if(!cart[id]) return;
+  cart[id].qty += delta;
+  if(cart[id].qty <= 0) delete cart[id];
+  updateCartUI();
+}
+
+function removeFromCart(id) {
+  delete cart[id];
+  updateCartUI();
+}
+
+// ── TOGGLE CART DRAWER ──
+function toggleCart() {
+  document.getElementById('drawer').classList.toggle('open');
+  document.getElementById('overlay').classList.toggle('open');
+}
+
+// ── SEND ORDER ──
+function sendOrder() {
+  const items = Object.values(cart).filter(i => i.qty > 0);
+  if(items.length === 0) return;
+
+  // Validate fields
+  const nombre = document.getElementById('inputNombre').value.trim();
+  const tel = document.getElementById('inputTel').value.trim();
+  const dir = document.getElementById('inputDir').value.trim();
+  const nota = document.getElementById('inputNota').value.trim();
+
+  let valid = true;
+
+  document.getElementById('fieldNombre').classList.remove('has-error');
+  document.getElementById('fieldTel').classList.remove('has-error');
+
+  if(!nombre) { document.getElementById('fieldNombre').classList.add('has-error'); valid = false; }
+  if(!tel) { document.getElementById('fieldTel').classList.add('has-error'); valid = false; }
+  if(!valid) return;
+
+  const total = items.reduce((s, i) => s + i.producto.precio * i.qty, 0);
+
+  // Build WhatsApp message
+  let msg = '🍗 *PEDIDO RED ROOSTER*\n\n';
+  items.forEach(i => { msg += `${i.producto.emoji} ${i.producto.nombre} x${i.qty} — $${(i.producto.precio * i.qty).toLocaleString('es-CO')}\n`; });
+  msg += `\n*TOTAL: $${total.toLocaleString('es-CO')}*\n\n`;
+  msg += `👤 *Cliente:* ${nombre}\n`;
+  msg += `📱 *Teléfono:* ${tel}\n`;
+  if(dir) msg += `📍 *Dirección:* ${dir}\n`;
+  if(nota) msg += `📝 *Nota:* ${nota}\n`;
+  msg += `\n_Pedido desde redroosterestaurant.com_`;
+
+  const url = 'https://wa.me/573043987213?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+
+  // Save order to backend
+  savePedido({ nombre, tel, dir, nota, items, total });
+}
+
+// ── SAVE PEDIDO (con CSRF token) ──
+async function savePedido(data) {
+  try {
+    // 1. Obtener token CSRF del servidor
+    const tokenRes = await fetch('api.php?action=csrf_token', { credentials: 'same-origin' });
+    const tokenData = await tokenRes.json();
+    const csrfToken = tokenData.token;
+
+    // 2. Enviar pedido — total lo recalcula el servidor, lo enviamos igual
+    //    como referencia pero el servidor usa su propio cálculo
+    await fetch('api.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
+      },
+      body: JSON.stringify({
+        action: 'save_pedido',
+        cliente: data.nombre,
+        telefono: data.tel,
+        direccion: data.dir,
+        nota: data.nota,
+        productos: data.items.map(i => ({ id: i.producto.id, qty: i.qty })),
+        _csrf: csrfToken
+      })
+    });
+  } catch(e) { /* silently fail — el pedido ya se mandó por WhatsApp */ }
+}
+
+// ── INIT ──
+loadProductos();
+</script>
+</body>
+</html>

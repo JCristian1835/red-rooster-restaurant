@@ -1,0 +1,44 @@
+{
+  "mesas": [
+    {
+      "id": "mesa_01",
+      "numero": 1,
+      "capacidad": 4,
+      "zona": "salon",
+      "estado": "disponible",
+      "activa": true
+    },
+    {
+      "id": "mesa_02",
+      "numero": 2,
+      "capacidad": 4,
+      "zona": "salon",
+      "estado": "disponible",
+      "activa": true
+    },
+    {
+      "id": "mesa_03",
+      "numero": 3,
+      "capacidad": 2,
+      "zona": "salon",
+      "estado": "disponible",
+      "activa": true
+    },
+    {
+      "id": "mesa_04",
+      "numero": 4,
+      "capacidad": 4,
+      "zona": "salon",
+      "estado": "disponible",
+      "activa": true
+    },
+    {
+      "id": "mesa_05",
+      "numero": 5,
+      "capacidad": 3,
+      "zona": "salon",
+      "estado": "disponible",
+      "activa": true
+    }
+  ]
+}
