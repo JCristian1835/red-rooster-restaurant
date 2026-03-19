@@ -315,50 +315,57 @@ let state = { screen:'login', mesaActual:null, productos:[], cart:{}, meseroNomb
 
 // ── API ──
 async function api(action, method='GET', data=null) {
-  const url = 'api.php?action=' + action;
-  const opts = { method, credentials:'include', headers:{} };
-  if (data) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.headers['X-CSRF-Token'] = csrfToken;
-    opts.body = JSON.stringify(data);
+  try {
+    const url = 'api.php?action=' + action;
+    const opts = { method, credentials:'include', headers:{} };
+    if (data) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.headers['X-CSRF-Token'] = csrfToken;
+      opts.body = JSON.stringify(data);
+    }
+    const r = await fetch(url, opts);
+    const text = await r.text();
+    try { return JSON.parse(text); }
+    catch(e) { return { error: 'Respuesta inválida: ' + text.substring(0,80) }; }
+  } catch(e) {
+    return { error: 'Sin conexión: ' + e.message };
   }
-  const r = await fetch(url, opts);
-  return r.json();
 }
 
 // ── Init ──
 async function init() {
-  const r = await api('mesero_check_auth');
-  hide('loading');
-  if (r.auth) {
-    csrfToken = r.csrf_token;
-    await goMesas();
-  } else {
-    showScreen('login');
-  }
+  try {
+    const r = await api('mesero_check_auth');
+    hide('loading');
+    if (r.auth) { csrfToken = r.csrf_token; await goMesas(); }
+    else showScreen('login');
+  } catch(e) { hide('loading'); showScreen('login'); }
 }
 
 // ── PIN ──
 let pin = '';
+let pinBusy = false;
 function keyPress(k) {
-  if (pin.length >= 4) return;
+  if (pin.length >= 4 || pinBusy) return;
   pin += k;
   updateDots();
   if (pin.length === 4) keyOk();
 }
-function keyDel() { pin = pin.slice(0,-1); updateDots(); setErr(''); }
+function keyDel() { if (pinBusy) return; pin = pin.slice(0,-1); updateDots(); setErr(''); }
 function updateDots() {
   for (let i=0;i<4;i++) el('dot-'+i).classList.toggle('filled', i < pin.length);
 }
 async function keyOk() {
-  if (pin.length < 4) return;
+  if (pin.length < 4 || pinBusy) return;
+  pinBusy = true;
   const r = await api('mesero_login','POST',{pin});
+  pinBusy = false;
   if (r.success) {
     csrfToken = r.csrf_token;
     pin = ''; updateDots();
     await goMesas();
   } else {
-    setErr('PIN INCORRECTO');
+    setErr(r.error || 'PIN INCORRECTO');
     pin = ''; updateDots();
   }
 }
@@ -382,7 +389,7 @@ async function goMesas() {
   state.mesaActual = null;
   state.cart = {};
   const r = await api('get_mesas');
-  if (!r.success) { showScreen('login'); return; }
+  if (!r.success) { showScreen('login'); setErr('Error cargando mesas: ' + (r.error||'sin respuesta')); return; }
   const g = el('mesas-grid');
   g.innerHTML = '';
   (r.mesas || []).filter(m => m.activa).forEach(m => {
