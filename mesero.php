@@ -267,12 +267,19 @@ html,body { height:100%; overflow:hidden; background:var(--black); color:var(--w
   <!-- MESAS -->
   <div id="screen-mesas" class="screen">
     <h2>Selecciona una mesa</h2>
-    <div id="llevar-btn-wrap" style="margin-bottom:16px;">
-      <div class="mesa-card llevar" onclick="goLlevar()" style="border-color:var(--gold);background:rgba(232,160,32,.08);display:flex;align-items:center;justify-content:center;gap:12px;padding:16px;">
-        <span style="font-size:28px">🥡</span>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div class="mesa-card" onclick="goLlevar()" style="border-color:var(--gold);background:rgba(232,160,32,.08);display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;">
+        <span style="font-size:24px">🥡</span>
         <div>
-          <div style="font-size:18px;color:var(--white);letter-spacing:2px;">PARA LLEVAR</div>
-          <div style="font-size:11px;color:var(--gold);letter-spacing:1px;margin-top:2px;">Pedido sin mesa</div>
+          <div style="font-size:15px;color:var(--white);letter-spacing:2px;">LLEVAR</div>
+          <div style="font-size:10px;color:var(--gold);letter-spacing:1px;margin-top:2px;">Sin mesa</div>
+        </div>
+      </div>
+      <div class="mesa-card" onclick="goDomicilio()" style="border-color:#3b82f6;background:rgba(59,130,246,.08);display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;">
+        <span style="font-size:24px">🛵</span>
+        <div>
+          <div style="font-size:15px;color:var(--white);letter-spacing:2px;">DOMICILIO</div>
+          <div style="font-size:10px;color:#60a5fa;letter-spacing:1px;margin-top:2px;">A domicilio</div>
         </div>
       </div>
     </div>
@@ -311,6 +318,14 @@ html,body { height:100%; overflow:hidden; background:var(--black); color:var(--w
         <label>Nombre del cliente *</label>
         <input id="cliente-llevar" type="text" placeholder="Ej: Carlos" maxlength="100" autocomplete="off">
       </div>
+      <div id="campo-domicilio" style="display:none">
+        <label>Nombre del cliente *</label>
+        <input id="dom-nombre" type="text" placeholder="Ej: Carlos" maxlength="100" autocomplete="off" style="margin-bottom:8px">
+        <label>Teléfono *</label>
+        <input id="dom-telefono" type="tel" placeholder="Ej: 3001234567" maxlength="20" autocomplete="off" style="margin-bottom:8px">
+        <label>Dirección *</label>
+        <input id="dom-direccion" type="text" placeholder="Ej: Cra 7 # 12-34" maxlength="200" autocomplete="off">
+      </div>
       <div>
         <label>Tu nombre (mesero)</label>
         <input id="mesero-nombre" type="text" placeholder="Ej: Ana" maxlength="50" autocomplete="off">
@@ -331,10 +346,7 @@ const CSRF = '<?= htmlspecialchars($csrf, ENT_QUOTES, "UTF-8") ?>';
 
 // ── State ──
 let csrfToken = CSRF;
-let state = { screen:'login', mesaActual:null, productos:[], cart:{}, meseroNombre:'' };
-let tipoLlevarState = false;
-// shorthand
-Object.defineProperty(state, 'tipoLlevar', { get(){ return tipoLlevarState; }, set(v){ tipoLlevarState=v; } });
+let state = { screen:'login', mesaActual:null, productos:[], cart:{}, meseroNombre:'', tipo:'mesa' };
 
 // ── API ──
 async function api(action, method='GET', data=null) {
@@ -410,7 +422,8 @@ function showScreen(name) {
   el('btn-back').style.display = onMenu ? 'block' : 'none';
   el('btn-cart').style.display = onMenu ? 'flex' : 'none';
   el('bottom-bar').style.display = onMenu && cartTotal() > 0 ? 'flex' : 'none';
-  el('mesa-label').textContent = state.tipoLlevar ? '🥡 LLEVAR' : (state.mesaActual ? 'MESA ' + state.mesaActual.numero : '');
+  const labels = {mesa: state.mesaActual ? 'MESA '+state.mesaActual.numero : '', llevar:'🥡 LLEVAR', domicilio:'🛵 DOMICILIO'};
+  el('mesa-label').textContent = labels[state.tipo] || '';
   updateCartBadge();
 }
 
@@ -446,16 +459,13 @@ async function liberarMesa(e, mesaId) {
   else alert(r.error || 'No se pudo liberar');
 }
 
-// ── Llevar ──
-async function goLlevar() {
-  state.mesaActual = null;
-  state.tipoLlevar = true;
-  await goMenu(null);
-}
+// ── Llevar / Domicilio ──
+async function goLlevar()    { state.tipo = 'llevar';    state.mesaActual = null; await goMenu(null); }
+async function goDomicilio() { state.tipo = 'domicilio'; state.mesaActual = null; await goMenu(null); }
 
 // ── Menu ──
 async function goMenu(mesa) {
-  if (mesa !== null) state.tipoLlevar = false;
+  if (mesa !== null) state.tipo = 'mesa';
   state.mesaActual = mesa;
   state.cart = {};
   const r = await api('menu');
@@ -545,8 +555,10 @@ function updateBottomBar() {
 function openCart() {
   const items = Object.values(state.cart);
   if (!items.length) return;
-  el('cart-title').textContent = state.tipoLlevar ? 'PEDIDO PARA LLEVAR 🥡' : 'PEDIDO MESA ' + (state.mesaActual?.numero || '');
-  el('campo-cliente-llevar').style.display = state.tipoLlevar ? 'block' : 'none';
+  const cartTitles = {mesa:'PEDIDO MESA '+(state.mesaActual?.numero||''), llevar:'PEDIDO PARA LLEVAR 🥡', domicilio:'PEDIDO DOMICILIO 🛵'};
+  el('cart-title').textContent = cartTitles[state.tipo] || 'PEDIDO';
+  el('campo-cliente-llevar').style.display = state.tipo === 'llevar'    ? 'block' : 'none';
+  el('campo-domicilio').style.display       = state.tipo === 'domicilio' ? 'block' : 'none';
   const c = el('cart-items');
   c.innerHTML = '';
   items.forEach(item => {
@@ -595,28 +607,32 @@ async function enviarPedido() {
   el('btn-send').disabled = true;
   el('btn-send').textContent = 'ENVIANDO...';
 
-  if (state.tipoLlevar) {
-    const clienteNombre = el('cliente-llevar').value.trim();
-    if (!clienteNombre) {
-      el('cliente-llevar').focus();
-      el('cliente-llevar').style.borderColor = 'var(--red)';
-      el('btn-send').disabled = false;
-      el('btn-send').textContent = '🔥 ENVIAR A COCINA';
-      return;
-    }
+  // Validar campos según tipo
+  if (state.tipo === 'llevar') {
+    const v = el('cliente-llevar').value.trim();
+    if (!v) { el('cliente-llevar').focus(); el('cliente-llevar').style.borderColor='var(--red)'; el('btn-send').disabled=false; el('btn-send').textContent='🔥 ENVIAR A COCINA'; return; }
     el('cliente-llevar').style.borderColor = '';
   }
-  const clienteNombre = state.tipoLlevar ? el('cliente-llevar').value.trim() : null;
+  if (state.tipo === 'domicilio') {
+    const campos = [{id:'dom-nombre',label:'nombre'},{id:'dom-telefono',label:'teléfono'},{id:'dom-direccion',label:'dirección'}];
+    for (const c of campos) {
+      if (!el(c.id).value.trim()) { el(c.id).focus(); el(c.id).style.borderColor='var(--red)'; el('btn-send').disabled=false; el('btn-send').textContent='🔥 ENVIAR A COCINA'; return; }
+      el(c.id).style.borderColor = '';
+    }
+  }
 
-  const r = await api('save_pedido_mesa','POST',{
-    mesa_id:  state.tipoLlevar ? null : state.mesaActual.id,
-    tipo:     state.tipoLlevar ? 'llevar' : 'mesa',
-    cliente:  clienteNombre,
+  const payload = {
+    tipo:     state.tipo,
     mesero:   meseroNombre,
     nota:     nota,
     productos: items.map(i=>({id:i.id, qty:i.qty})),
     _csrf:    csrfToken
-  });
+  };
+  if (state.tipo === 'mesa')      { payload.mesa_id = state.mesaActual.id; }
+  if (state.tipo === 'llevar')    { payload.cliente = el('cliente-llevar').value.trim(); }
+  if (state.tipo === 'domicilio') { payload.cliente = el('dom-nombre').value.trim(); payload.telefono = el('dom-telefono').value.trim(); payload.direccion = el('dom-direccion').value.trim(); }
+
+  const r = await api('save_pedido_mesa','POST', payload);
 
   el('btn-send').disabled = false;
   el('btn-send').textContent = '🔥 ENVIAR A COCINA';

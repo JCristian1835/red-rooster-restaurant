@@ -345,8 +345,8 @@ function buildCard(p) {
   card.innerHTML = `
     <div class="card-header">
       <div>
-        <div class="card-mesa">${p.tipo === 'llevar' ? '🥡 LLEVAR' : 'MESA ' + (p.mesa_num || '?')}</div>
-        ${p.tipo === 'llevar' ? `<div style="font-size:13px;color:var(--gold);letter-spacing:1px;">${p.cliente||''}</div>` : ''}
+        <div class="card-mesa">${p.tipo === 'llevar' ? '🥡 LLEVAR' : p.tipo === 'domicilio' ? '🛵 DOMICILIO' : 'MESA ' + (p.mesa_num || '?')}</div>
+        ${p.tipo !== 'mesa' ? `<div style="font-size:13px;color:var(--gold);letter-spacing:1px;">${p.cliente||''}${p.direccion ? ' · '+p.direccion : ''}</div>` : ''}
         <span class="card-badge">${labels[p.estado]||p.estado}</span>
       </div>
       <div class="card-meta">

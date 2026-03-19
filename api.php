@@ -190,12 +190,15 @@ if ($method === 'GET' && $action === 'cocina_check_auth') {
 
 if ($method === 'POST' && $action === 'save_pedido_mesa') {
     reqMesero(); verifyCsrf();
-    $tipo    = ($body['tipo'] ?? 'mesa') === 'llevar' ? 'llevar' : 'mesa';
+    $tipo_raw = $body['tipo'] ?? 'mesa';
+    $tipo    = in_array($tipo_raw, ['mesa','llevar','domicilio']) ? $tipo_raw : 'mesa';
     $mesa_id = san($body['mesa_id'] ?? '', 50);
     $mesa    = null;
     $mesas   = [];
 
-    if ($tipo === 'mesa') {
+    if ($tipo === 'llevar' || $tipo === 'domicilio') {
+        // sin mesa
+    } else if ($tipo === 'mesa') {
         if (!$mesa_id) respond(['error' => 'Mesa requerida'], 422);
         $mdata = rjson($D.'mesas.json'); $mesas = $mdata['mesas'] ?? [];
         if (!is_array($mesas) || isset($mesas['mesas'])) $mesas = [];
@@ -220,13 +223,15 @@ if ($method === 'POST' && $action === 'save_pedido_mesa') {
     $pedidos = rjson($D.'pedidos.json');
     $nid     = $pedidos ? max(array_column($pedidos, 'id')) + 1 : 101;
 
-    if ($tipo === 'llevar') {
+    if ($tipo === 'llevar' || $tipo === 'domicilio') {
         $cliente = san($body['cliente'] ?? 'Cliente', 100);
-        $pedido  = ['id'=>$nid,'fecha'=>date('c'),'tipo'=>'llevar',
+        $pedido  = ['id'=>$nid,'fecha'=>date('c'),'tipo'=>$tipo,
                     'mesero'=>san($body['mesero']??'Mesero',50),
                     'nota'=>san($body['nota']??'',300),
                     'productos'=>$items,'total'=>$total,'estado'=>'pendiente',
-                    'cliente'=>$cliente,'telefono'=>'',
+                    'cliente'=>$cliente,
+                    'telefono'=>san($body['telefono']??'',20),
+                    'direccion'=>san($body['direccion']??'',200),
                     'ip'=>md5(get_client_ip())];
     } else {
         $pedido  = ['id'=>$nid,'fecha'=>date('c'),'tipo'=>'mesa',
@@ -1040,7 +1045,7 @@ if ($method === 'GET' && $action === 'get_cuentas_abiertas') {
     reqAuth();
     $pedidos = rjson($D.'pedidos.json');
     $abiertas = array_values(array_filter($pedidos, fn($p) =>
-        ($p['tipo'] ?? '') === 'mesa' &&
+        in_array($p['tipo'] ?? '', ['mesa','llevar','domicilio']) &&
         !in_array($p['estado'] ?? '', ['pagado', 'cancelado'])
     ));
     usort($abiertas, fn($a, $b) => strcmp($a['fecha'] ?? '', $b['fecha'] ?? ''));
