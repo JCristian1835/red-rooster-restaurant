@@ -1102,3 +1102,4 @@ if ($method === 'POST' && $action === 'cerrar_cuenta') {
 // FALLBACK — ningún endpoint coincidió
 // ══════════════════════════════════════════════════════════════════════════════
 respond(['error' => 'Endpoint no encontrado', 'action' => $action], 404);
+ 
