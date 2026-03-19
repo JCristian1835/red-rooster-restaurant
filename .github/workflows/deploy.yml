@@ -10,20 +10,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install lftp
+        run: sudo apt-get install -y lftp
+
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-        with:
-          server:   ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port:     21
-          local-dir: ./
-          server-dir: /public_html/
-          state-name: .ftp-deploy-sync-state-v2.json
-          exclude: |
-            **/.git*
-            **/.git*/**
-            .github/**
-            setup.php
-            data/**
-            includes/config.php
+        run: |
+          lftp -c "
+          set ftp:ssl-allow no;
+          set ftp:passive-mode yes;
+          open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }};
+          mirror --reverse --verbose \
+            --exclude-glob .git \
+            --exclude-glob .gitignore \
+            --exclude-glob .github \
+            --exclude-glob setup.php \
+            --exclude-glob 'data/' \
+            --exclude-glob 'includes/config.php' \
+            ./ /public_html/;
+          "
