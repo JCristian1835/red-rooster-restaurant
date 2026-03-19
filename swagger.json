@@ -1,0 +1,1899 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Red Rooster Restaurant — API",
+    "description": "API interna del sistema de gestión Red Rooster Restaurant.\n\n**Sistema completo — 8 módulos:**\n- Módulo 01: Control de caja\n- Módulo 02: Estadísticas\n- Módulo 03: Gastos y costos\n- Módulo 04: Promos y descuentos\n- Módulo 05: Inventario\n- Módulo 06: Clientes frecuentes\n- Módulo 07: Empleados y turnos\n- Módulo 08: Mesas y reservas\n\n**Pilares de seguridad aplicados:**\n- **Confidencialidad:** CORS estricto, sesiones PHP seguras, datos sensibles nunca expuestos\n- **Integridad:** CSRF tokens en todas las mutaciones, validación server-side, LOCK_EX en escrituras\n- **Disponibilidad:** Rate limiting por IP, manejo de errores robusto\n- **Autenticación:** bcrypt, expiración de sesión, regeneración de ID\n- **No repudio:** Timestamps del servidor, hash de IP en transacciones\n\n**Autenticación requerida:** Todos los endpoints excepto `GET /menu` y `POST /save_pedido` requieren sesión PHP activa.",
+    "version": "2.8.0",
+    "contact": {
+      "name": "Red Rooster Restaurant",
+      "url": "https://redroosterestaurant.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://redroosterestaurant.com/api.php",
+      "description": "Producción"
+    },
+    {
+      "url": "http://localhost/api.php",
+      "description": "Desarrollo local"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Autenticación y sesión"
+    },
+    {
+      "name": "Menu",
+      "description": "Productos del menú (público)"
+    },
+    {
+      "name": "Pedidos",
+      "description": "Gestión de pedidos"
+    },
+    {
+      "name": "Productos",
+      "description": "CRUD de productos (admin)"
+    },
+    {
+      "name": "Caja",
+      "description": "Módulo 01 — Control de caja y ventas"
+    },
+    {
+      "name": "Stats",
+      "description": "Módulo 02 — Estadísticas y reportes (próximo)"
+    },
+    {
+      "name": "Gastos",
+      "description": "Módulo 03 — Gastos y costos (próximo)"
+    },
+    {
+      "name": "Promos",
+      "description": "Módulo 04 — Promos y descuentos (próximo)"
+    },
+    {
+      "name": "Inventario",
+      "description": "Módulo 05 — Inventario (próximo)"
+    },
+    {
+      "name": "Clientes",
+      "description": "Módulo 06 — Clientes frecuentes (próximo)"
+    },
+    {
+      "name": "Empleados",
+      "description": "Módulo 07 — Empleados y turnos (próximo)"
+    },
+    {
+      "name": "Mesas",
+      "description": "Módulo 08 — Mesas y reservas (próximo)"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "rr_session",
+        "description": "Sesión PHP. Obtener con POST /login"
+      },
+      "csrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token",
+        "description": "Token CSRF. Obtener con GET /csrf_token"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "No autorizado"
+          }
+        }
+      },
+      "Success": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "Producto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 1
+          },
+          "nombre": {
+            "type": "string",
+            "example": "1 Pollo"
+          },
+          "precio": {
+            "type": "integer",
+            "example": 39900
+          },
+          "categoria": {
+            "type": "string",
+            "enum": [
+              "pollo",
+              "carta",
+              "hamburguesas"
+            ]
+          },
+          "descripcion": {
+            "type": "string",
+            "example": "Con papa, plátano y arepas"
+          },
+          "activo": {
+            "type": "boolean",
+            "example": true
+          },
+          "emoji": {
+            "type": "string",
+            "example": "🐓"
+          },
+          "tag": {
+            "type": "string",
+            "example": "TOP",
+            "nullable": true
+          }
+        }
+      },
+      "Pedido": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "example": 101
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cliente": {
+            "type": "string",
+            "example": "Juan García"
+          },
+          "telefono": {
+            "type": "string",
+            "example": "3001234567"
+          },
+          "direccion": {
+            "type": "string",
+            "example": "Calle 150 #14-20"
+          },
+          "nota": {
+            "type": "string",
+            "example": "Sin cebolla"
+          },
+          "productos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer"
+                },
+                "nombre": {
+                  "type": "string"
+                },
+                "qty": {
+                  "type": "integer"
+                },
+                "precio": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "total": {
+            "type": "integer",
+            "example": 39900
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "pendiente",
+              "preparando",
+              "entregado",
+              "cancelado"
+            ]
+          }
+        }
+      },
+      "Transaccion": {
+        "type": "object",
+        "required": [
+          "concepto",
+          "monto",
+          "metodo",
+          "tipo"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "tx_1710000000_abc1"
+          },
+          "hora": {
+            "type": "string",
+            "example": "14:35",
+            "description": "Generado por el servidor"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-03-14"
+          },
+          "concepto": {
+            "type": "string",
+            "example": "Pedido #101 - 1 Pollo"
+          },
+          "metodo": {
+            "type": "string",
+            "enum": [
+              "efectivo",
+              "tarjeta",
+              "nequi",
+              "bancolombia"
+            ]
+          },
+          "monto": {
+            "type": "integer",
+            "example": 39900,
+            "minimum": 0
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "ingreso",
+              "egreso"
+            ]
+          },
+          "referencia": {
+            "type": "string",
+            "example": "REF-001",
+            "nullable": true,
+            "description": "Referencia para Nequi/Bancolombia"
+          },
+          "pedido_id": {
+            "type": "integer",
+            "nullable": true,
+            "description": "ID del pedido relacionado"
+          }
+        }
+      },
+      "Turno": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "turno_20260314_001"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date"
+          },
+          "apertura": {
+            "type": "string",
+            "example": "10:00"
+          },
+          "cierre": {
+            "type": "string",
+            "example": "22:00",
+            "nullable": true
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "abierto",
+              "cerrado"
+            ]
+          },
+          "base_caja": {
+            "type": "integer",
+            "example": 50000
+          },
+          "transacciones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Transaccion"
+            }
+          },
+          "totales": {
+            "type": "object",
+            "properties": {
+              "efectivo": {
+                "type": "integer"
+              },
+              "tarjeta": {
+                "type": "integer"
+              },
+              "nequi": {
+                "type": "integer"
+              },
+              "bancolombia": {
+                "type": "integer"
+              },
+              "total_ingresos": {
+                "type": "integer"
+              },
+              "total_egresos": {
+                "type": "integer"
+              },
+              "neto": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "AbrirTurno": {
+        "type": "object",
+        "required": [
+          "base_caja"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "example": "abrir_turno"
+          },
+          "base_caja": {
+            "type": "integer",
+            "example": 50000,
+            "description": "Dinero inicial en caja"
+          }
+        }
+      },
+      "RegistrarTransaccion": {
+        "type": "object",
+        "required": [
+          "concepto",
+          "monto",
+          "metodo",
+          "tipo"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "example": "registrar_transaccion"
+          },
+          "concepto": {
+            "type": "string",
+            "example": "Venta 1 Pollo"
+          },
+          "monto": {
+            "type": "integer",
+            "example": 39900
+          },
+          "metodo": {
+            "type": "string",
+            "enum": [
+              "efectivo",
+              "tarjeta",
+              "nequi",
+              "bancolombia"
+            ]
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "ingreso",
+              "egreso"
+            ]
+          },
+          "referencia": {
+            "type": "string",
+            "nullable": true
+          },
+          "pedido_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "?action=login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Iniciar sesión",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "usuario",
+                  "password"
+                ],
+                "properties": {
+                  "usuario": {
+                    "type": "string",
+                    "example": "redrooster"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "••••••••"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login exitoso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Success"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "csrf_token": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciales incorrectas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Demasiados intentos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "?action=logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Cerrar sesión",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sesión cerrada"
+          }
+        }
+      }
+    },
+    "?action=csrf_token": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "summary": "Obtener token CSRF",
+        "responses": {
+          "200": {
+            "description": "Token generado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "?action=menu": {
+      "get": {
+        "tags": [
+          "Menu"
+        ],
+        "summary": "Obtener menú activo (público)",
+        "description": "Devuelve solo productos con activo=true. No requiere autenticación.",
+        "responses": {
+          "200": {
+            "description": "Lista de productos activos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "productos": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Producto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "?action=save_pedido": {
+      "post": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Guardar pedido (público)",
+        "description": "Guarda un pedido. El total es recalculado en el servidor — nunca se confía en el total del cliente.",
+        "security": [
+          {
+            "csrfToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "cliente",
+                  "telefono",
+                  "productos"
+                ],
+                "properties": {
+                  "cliente": {
+                    "type": "string"
+                  },
+                  "telefono": {
+                    "type": "string"
+                  },
+                  "direccion": {
+                    "type": "string"
+                  },
+                  "nota": {
+                    "type": "string"
+                  },
+                  "productos": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer"
+                        },
+                        "qty": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido guardado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "id": {
+                      "type": "integer"
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Datos inválidos"
+          },
+          "429": {
+            "description": "Rate limit excedido"
+          }
+        }
+      }
+    },
+    "?action=get_pedidos": {
+      "get": {
+        "tags": [
+          "Pedidos"
+        ],
+        "summary": "Obtener todos los pedidos (admin)",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pendiente",
+                "preparando",
+                "entregado",
+                "cancelado"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de pedidos"
+          },
+          "401": {
+            "description": "No autorizado"
+          }
+        }
+      }
+    },
+    "?action=abrir_turno": {
+      "post": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Módulo 01 — Abrir turno de caja",
+        "description": "Abre un nuevo turno. Solo puede haber un turno abierto por día. Registra la base de caja inicial.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AbrirTurno"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Turno abierto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "turno": {
+                      "$ref": "#/components/schemas/Turno"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ya existe un turno abierto hoy"
+          },
+          "401": {
+            "description": "No autorizado"
+          }
+        }
+      }
+    },
+    "?action=cerrar_turno": {
+      "post": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Módulo 01 — Cerrar turno de caja",
+        "description": "Cierra el turno activo. Genera el resumen final con totales por método de pago.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Turno cerrado con resumen"
+          },
+          "404": {
+            "description": "No hay turno abierto"
+          }
+        }
+      }
+    },
+    "?action=registrar_transaccion": {
+      "post": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Módulo 01 — Registrar transacción",
+        "description": "Registra un ingreso o egreso en el turno activo. La hora es asignada por el servidor.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrarTransaccion"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transacción registrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "transaccion": {
+                      "$ref": "#/components/schemas/Transaccion"
+                    },
+                    "totales": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No hay turno abierto"
+          },
+          "422": {
+            "description": "Datos inválidos"
+          }
+        }
+      }
+    },
+    "?action=get_turno": {
+      "get": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Módulo 01 — Obtener turno activo",
+        "description": "Devuelve el turno abierto del día con todas sus transacciones y totales.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Turno activo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "turno": {
+                      "$ref": "#/components/schemas/Turno"
+                    },
+                    "tiene_turno_abierto": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "?action=get_historial_caja": {
+      "get": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Módulo 01 — Historial de caja",
+        "description": "Devuelve los últimos N turnos cerrados.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 7
+            },
+            "description": "Número de días a consultar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historial de turnos"
+          }
+        }
+      }
+    },
+    "?action=export_caja_csv": {
+      "get": {
+        "tags": [
+          "Caja"
+        ],
+        "summary": "Módulo 01 — Exportar caja a CSV",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo CSV",
+            "content": {
+              "text/csv": {}
+            }
+          }
+        }
+      }
+    },
+    "?action=get_stats": {
+      "get": {
+        "tags": [
+          "Stats"
+        ],
+        "summary": "Módulo 02 — Estadísticas del período",
+        "description": "Calcula KPIs, top platos, ventas por día, horas pico y métodos de pago desde pedidos.json y caja.json. No requiere tabla adicional.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "periodo",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "hoy",
+                "semana",
+                "7d",
+                "30d"
+              ],
+              "default": "7d"
+            },
+            "description": "Período a analizar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadísticas calculadas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "periodo": {
+                      "type": "string"
+                    },
+                    "rango": {
+                      "type": "object",
+                      "properties": {
+                        "desde": {
+                          "type": "string"
+                        },
+                        "hasta": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "dia_descanso": {
+                      "type": "integer",
+                      "description": "0=Dom ... 6=Sáb. Configurable en config.php"
+                    },
+                    "kpis": {
+                      "type": "object"
+                    },
+                    "top_platos": {
+                      "type": "array"
+                    },
+                    "ventas_dia": {
+                      "type": "array"
+                    },
+                    "horas": {
+                      "type": "object"
+                    },
+                    "hora_pico": {
+                      "type": "integer"
+                    },
+                    "metodos_pago": {
+                      "type": "array"
+                    },
+                    "estados_pedidos": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autorizado"
+          }
+        }
+      }
+    },
+    "?action=get_categorias_gasto": {
+      "get": {
+        "tags": [
+          "Gastos"
+        ],
+        "summary": "Módulo 03 — Listar categorías de gasto",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de categorías"
+          }
+        }
+      }
+    },
+    "?action=registrar_gasto": {
+      "post": {
+        "tags": [
+          "Gastos"
+        ],
+        "summary": "Módulo 03 — Registrar gasto",
+        "description": "Fecha y hora asignadas por el servidor. CSRF requerido.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "concepto",
+                  "monto",
+                  "categoria"
+                ],
+                "properties": {
+                  "concepto": {
+                    "type": "string"
+                  },
+                  "monto": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "categoria": {
+                    "type": "string",
+                    "enum": [
+                      "insumos",
+                      "nomina",
+                      "servicios",
+                      "arriendo",
+                      "mantenimiento",
+                      "empaque",
+                      "publicidad",
+                      "otros"
+                    ]
+                  },
+                  "nota": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Gasto registrado"
+          },
+          "422": {
+            "description": "Datos inválidos"
+          }
+        }
+      }
+    },
+    "?action=get_gastos": {
+      "get": {
+        "tags": [
+          "Gastos"
+        ],
+        "summary": "Módulo 03 — Listar gastos",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "categoria",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gastos + totales por categoría"
+          }
+        }
+      }
+    },
+    "?action=eliminar_gasto": {
+      "post": {
+        "tags": [
+          "Gastos"
+        ],
+        "summary": "Módulo 03 — Eliminar gasto",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado"
+          },
+          "404": {
+            "description": "No encontrado"
+          }
+        }
+      }
+    },
+    "?action=get_balance": {
+      "get": {
+        "tags": [
+          "Gastos"
+        ],
+        "summary": "Módulo 03 — Balance del período",
+        "description": "Cruza ingresos de caja vs gastos registrados → utilidad real",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Balance con utilidad y margen"
+          }
+        }
+      }
+    },
+    "?action=export_gastos_csv": {
+      "get": {
+        "tags": [
+          "Gastos"
+        ],
+        "summary": "Módulo 03 — Exportar gastos CSV",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo CSV",
+            "content": {
+              "text/csv": {}
+            }
+          }
+        }
+      }
+    },
+    "?action=get_promos_activas": {
+      "get": {
+        "tags": [
+          "Promos"
+        ],
+        "summary": "Módulo 04 — Promos vigentes hoy (público)",
+        "description": "Usado por menu.html para mostrar el banner de promos. No requiere autenticación.",
+        "responses": {
+          "200": {
+            "description": "Promos activas y vigentes"
+          }
+        }
+      }
+    },
+    "?action=get_promos": {
+      "get": {
+        "tags": [
+          "Promos"
+        ],
+        "summary": "Módulo 04 — Todas las promos (admin)",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Todas las promos con estado de vigencia"
+          }
+        }
+      }
+    },
+    "?action=crear_promo": {
+      "post": {
+        "tags": [
+          "Promos"
+        ],
+        "summary": "Módulo 04 — Crear promo",
+        "description": "Crea una promo con tipo porcentaje o valor fijo, fechas de vigencia y producto al que aplica.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Promo creada"
+          },
+          "422": {
+            "description": "Datos inválidos"
+          }
+        }
+      }
+    },
+    "?action=toggle_promo": {
+      "post": {
+        "tags": [
+          "Promos"
+        ],
+        "summary": "Módulo 04 — Activar/desactivar promo",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado cambiado"
+          }
+        }
+      }
+    },
+    "?action=eliminar_promo": {
+      "post": {
+        "tags": [
+          "Promos"
+        ],
+        "summary": "Módulo 04 — Eliminar promo",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminada"
+          }
+        }
+      }
+    },
+    "?action=aplicar_promo": {
+      "post": {
+        "tags": [
+          "Promos"
+        ],
+        "summary": "Módulo 04 — Aplicar promo a carrito",
+        "description": "Calcula el descuento SERVER-SIDE. Nunca confiar en el cliente para calcular precios con descuento.",
+        "responses": {
+          "200": {
+            "description": "Total original, total con promo, ahorro"
+          },
+          "404": {
+            "description": "Promo no existe"
+          },
+          "422": {
+            "description": "Promo no vigente"
+          }
+        }
+      }
+    },
+    "?action=get_inventario": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "summary": "Módulo 05 — Listar inventario",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alertas",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "0",
+                "1"
+              ]
+            },
+            "description": "1 = solo ítems con alerta"
+          },
+          {
+            "name": "categoria",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ítems con estado de stock y resumen"
+          }
+        }
+      }
+    },
+    "?action=crear_item_inventario": {
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "summary": "Módulo 05 — Crear insumo",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Insumo creado"
+          }
+        }
+      }
+    },
+    "?action=movimiento_inventario": {
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "summary": "Módulo 05 — Registrar movimiento de stock",
+        "description": "Entrada (suma), Salida (resta), Ajuste (establece valor). Fecha del servidor.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock actualizado"
+          },
+          "422": {
+            "description": "Stock insuficiente"
+          }
+        }
+      }
+    },
+    "?action=eliminar_item_inventario": {
+      "post": {
+        "tags": [
+          "Inventario"
+        ],
+        "summary": "Módulo 05 — Eliminar insumo",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Eliminado"
+          }
+        }
+      }
+    },
+    "?action=get_alertas_inventario": {
+      "get": {
+        "tags": [
+          "Inventario"
+        ],
+        "summary": "Módulo 05 — Alertas de stock bajo",
+        "description": "Usado por el dashboard. Devuelve solo ítems con estado bajo/crítico/agotado.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de alertas"
+          }
+        }
+      }
+    },
+    "?action=get_clientes": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Módulo 06 — Listar clientes",
+        "description": "Sincroniza automáticamente desde pedidos.json antes de responder. Clave única: teléfono.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Búsqueda por nombre o teléfono"
+          },
+          {
+            "name": "etiqueta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vip",
+                "frecuente",
+                "nuevo",
+                "inactivo"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clientes + estadísticas globales"
+          }
+        }
+      }
+    },
+    "?action=get_cliente_detalle": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Módulo 06 — Detalle de cliente",
+        "description": "Devuelve datos del cliente + todos sus pedidos históricos.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tel",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cliente + pedidos"
+          },
+          "404": {
+            "description": "No encontrado"
+          }
+        }
+      }
+    },
+    "?action=actualizar_cliente": {
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Módulo 06 — Actualizar nota y etiqueta",
+        "description": "Solo se pueden editar nota y etiqueta. Los datos de pedidos son inmutables.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Actualizado"
+          }
+        }
+      }
+    },
+    "?action=get_empleados": {
+      "get": {
+        "tags": [
+          "Empleados"
+        ],
+        "summary": "Módulo 07 — Listar empleados",
+        "description": "El salario es omitido por confidencialidad.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista sin salarios"
+          }
+        }
+      }
+    },
+    "?action=get_empleado_detalle": {
+      "get": {
+        "tags": [
+          "Empleados"
+        ],
+        "summary": "Módulo 07 — Detalle con asistencias",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Empleado + asistencias 30 días"
+          }
+        }
+      }
+    },
+    "?action=crear_empleado": {
+      "post": {
+        "tags": [
+          "Empleados"
+        ],
+        "summary": "Módulo 07 — Crear empleado",
+        "description": "Cédula única. Salario guardado cifrado en JSON.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Creado"
+          },
+          "409": {
+            "description": "Cédula duplicada"
+          }
+        }
+      }
+    },
+    "?action=toggle_empleado": {
+      "post": {
+        "tags": [
+          "Empleados"
+        ],
+        "summary": "Módulo 07 — Activar/desactivar",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado cambiado"
+          }
+        }
+      }
+    },
+    "?action=registrar_asistencia": {
+      "post": {
+        "tags": [
+          "Empleados"
+        ],
+        "summary": "Módulo 07 — Registrar entrada/salida",
+        "description": "Hora asignada por servidor. Previene duplicados del mismo tipo en el mismo día.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registrado"
+          },
+          "409": {
+            "description": "Ya registrado hoy"
+          }
+        }
+      }
+    },
+    "?action=get_turno_hoy": {
+      "get": {
+        "tags": [
+          "Empleados"
+        ],
+        "summary": "Módulo 07 — Estado turno de hoy",
+        "description": "Todos los empleados activos con su estado: ausente/en_turno/completo.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado del turno"
+          }
+        }
+      }
+    },
+    "?action=get_asistencias": {
+      "get": {
+        "tags": [
+          "Empleados"
+        ],
+        "summary": "Módulo 07 — Historial asistencias",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "desde",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "empleado_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asistencias filtradas"
+          }
+        }
+      }
+    },
+    "?action=get_mesas": {
+      "get": {
+        "tags": [
+          "Mesas"
+        ],
+        "summary": "Módulo 08 — Mapa de mesas",
+        "description": "Devuelve todas las mesas con su estado actual y reserva activa si la hay. Agrupa por zona.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mesas + resumen por zona"
+          }
+        }
+      }
+    },
+    "?action=cambiar_estado_mesa": {
+      "post": {
+        "tags": [
+          "Mesas"
+        ],
+        "summary": "Módulo 08 — Cambiar estado de mesa",
+        "description": "Estados: disponible | ocupada | reservada | mantenimiento",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado actualizado"
+          }
+        }
+      }
+    },
+    "?action=crear_mesa": {
+      "post": {
+        "tags": [
+          "Mesas"
+        ],
+        "summary": "Módulo 08 — Crear mesa",
+        "description": "El número se asigna automáticamente (siguiente disponible).",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mesa creada"
+          }
+        }
+      }
+    },
+    "?action=get_reservas": {
+      "get": {
+        "tags": [
+          "Mesas"
+        ],
+        "summary": "Módulo 08 — Reservas por fecha",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fecha",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "mesa_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reservas ordenadas por hora"
+          }
+        }
+      }
+    },
+    "?action=crear_reserva": {
+      "post": {
+        "tags": [
+          "Mesas"
+        ],
+        "summary": "Módulo 08 — Crear reserva",
+        "description": "Previene doble reserva en ventana de 2 horas. No permite reservar en el pasado. Valida capacidad de la mesa.",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Reserva creada"
+          },
+          "409": {
+            "description": "Conflicto de horario"
+          },
+          "422": {
+            "description": "Capacidad excedida o fecha pasada"
+          }
+        }
+      }
+    },
+    "?action=actualizar_reserva": {
+      "post": {
+        "tags": [
+          "Mesas"
+        ],
+        "summary": "Módulo 08 — Actualizar estado de reserva",
+        "description": "Flujo: confirmada → sentada (mesa ocupa) → completada/cancelada (mesa disponible)",
+        "security": [
+          {
+            "sessionCookie": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado actualizado, mesa sincronizada"
+          }
+        }
+      }
+    }
+  }
+}

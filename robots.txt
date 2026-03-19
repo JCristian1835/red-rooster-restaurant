@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin.php
+Disallow: /api.php
+Disallow: /includes/
+Disallow: /data/
+
+Sitemap: https://redroosterestaurant.com/sitemap.xml

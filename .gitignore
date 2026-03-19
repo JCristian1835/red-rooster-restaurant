@@ -1,0 +1,8 @@
+# Datos sensibles — NO subir
+includes/config.php
+data/*.json
+
+# Archivos del sistema
+Thumbs.db
+.DS_Store
+*.log
