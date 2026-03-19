@@ -1,0 +1,25 @@
+# Credenciales y configuración sensible
+includes/config.php
+
+# Datos reales de clientes y operación
+data/pedidos.json
+data/caja.json
+data/clientes.json
+data/asistencias.json
+data/gastos.json
+data/reservas.json
+
+# Archivos temporales de diagnóstico
+debug.php
+hash.php
+test_api.php
+
+# Sistema operativo
+Thumbs.db
+.DS_Store
+desktop.ini
+
+# Editores
+.vscode/
+.idea/
+*.swp
