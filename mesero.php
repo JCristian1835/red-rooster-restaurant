@@ -373,13 +373,19 @@ async function keyOk() {
 function setErr(msg) { el('pin-error').textContent = msg; }
 
 // ── Screens ──
+const FLEX_SCREENS = ['login','ok'];
 function showScreen(name) {
   state.screen = name;
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  el('screen-'+name).classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  const s = el('screen-'+name);
+  s.classList.add('active');
+  s.style.display = FLEX_SCREENS.includes(name) ? 'flex' : 'block';
   const showCart = name === 'menu';
   el('btn-cart').style.display = showCart ? 'flex' : 'none';
-  el('bottom-bar').style.display = showCart ? 'flex' : 'none';
+  el('bottom-bar').style.display = showCart && cartTotal() > 0 ? 'flex' : 'none';
   el('mesa-label').textContent = state.mesaActual ? 'MESA ' + state.mesaActual.numero : '';
   updateCartBadge();
 }
