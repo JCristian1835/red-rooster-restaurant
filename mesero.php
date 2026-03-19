@@ -478,7 +478,7 @@ async function goMenu(mesa) {
   cats.forEach((c,i) => {
     const b = document.createElement('button');
     b.className = 'cat-btn' + (i===0?' active':'');
-    const catLabels = {todos:'TODOS', pollo:'POLLO', carta:'CARTA', hamburguesas:'HAMBURGUESAS', menu_dia:'MENÚ DEL DÍA'};
+    const catLabels = {todos:'TODOS', pollo:'POLLO', carta:'CARTA', hamburguesas:'HAMBURGUESAS', menu_dia:'MENÚ DEL DÍA', bebidas:'BEBIDAS', porciones:'PORCIONES'};
     b.textContent = catLabels[c] || c.toUpperCase();
     b.dataset.cat = c;
     b.onclick = () => {
