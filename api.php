@@ -927,7 +927,7 @@ if ($method === 'GET' && $action === 'get_mesas') {
 }
 
 if ($method === 'POST' && $action === 'cambiar_estado_mesa') {
-    reqAuth(); verifyCsrf();
+    reqMesero(); verifyCsrf();
     $id=san($body['id']??'',50); $estado=$body['estado']??'';
     if(!in_array($estado,['disponible','ocupada','reservada','mantenimiento'])) respond(['error'=>'Estado inválido'],422);
     $data=rjson($D.'mesas.json'); $mesas=$data['mesas']??[];

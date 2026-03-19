@@ -94,6 +94,12 @@ html,body { height:100%; overflow:hidden; background:var(--black); color:var(--w
 .mesa-num  { font-size:28px; color:var(--white); line-height:1; }
 .mesa-cap  { font-size:11px; color:var(--gray); letter-spacing:1px; margin-top:4px; }
 .mesa-est  { font-size:10px; letter-spacing:2px; margin-top:6px; text-transform:uppercase; }
+.mesa-liberar {
+  display:block; width:100%; margin-top:8px; background:transparent;
+  border:1px solid var(--orange); color:var(--orange); font-family:'BigNoodle',sans-serif;
+  font-size:11px; letter-spacing:1px; padding:5px; cursor:pointer; border-radius:3px;
+}
+.mesa-liberar:active { background:var(--orange); color:var(--black); }
 .disponible .mesa-est { color:var(--green); }
 .ocupada .mesa-est    { color:var(--orange); }
 .reservada .mesa-est  { color:var(--yellow); }
@@ -221,7 +227,8 @@ html,body { height:100%; overflow:hidden; background:var(--black); color:var(--w
 
 <!-- TOP BAR -->
 <div id="topbar">
-  <div class="brand">Red Rooster</div>
+  <button id="btn-back" onclick="goMesas()" style="display:none;background:transparent;border:none;color:var(--gray);font-size:22px;cursor:pointer;padding:0 8px 0 0;">←</button>
+  <div class="brand" style="flex:1">Red Rooster</div>
   <div id="mesa-label" class="mesa-label"></div>
   <button id="btn-cart" onclick="openCart()" style="display:none">
     🛒 <span id="cart-badge">0</span>
@@ -383,9 +390,10 @@ function showScreen(name) {
   const s = el('screen-'+name);
   s.classList.add('active');
   s.style.display = FLEX_SCREENS.includes(name) ? 'flex' : 'block';
-  const showCart = name === 'menu';
-  el('btn-cart').style.display = showCart ? 'flex' : 'none';
-  el('bottom-bar').style.display = showCart && cartTotal() > 0 ? 'flex' : 'none';
+  const onMenu = name === 'menu';
+  el('btn-back').style.display = onMenu ? 'block' : 'none';
+  el('btn-cart').style.display = onMenu ? 'flex' : 'none';
+  el('bottom-bar').style.display = onMenu && cartTotal() > 0 ? 'flex' : 'none';
   el('mesa-label').textContent = state.mesaActual ? 'MESA ' + state.mesaActual.numero : '';
   updateCartBadge();
 }
@@ -402,13 +410,24 @@ async function goMesas() {
     const d = document.createElement('div');
     d.className = 'mesa-card ' + (m.estado || 'disponible');
     const labels = {disponible:'Libre', ocupada:'Ocupada', reservada:'Reservada', mantenimiento:'Mant.'};
-    d.innerHTML = `<div class="mesa-num">${m.numero}</div>
+    const ocupada = m.estado === 'ocupada';
+    d.innerHTML = `
+      <div class="mesa-num">${m.numero}</div>
       <div class="mesa-cap">👥 ${m.capacidad}</div>
-      <div class="mesa-est">${labels[m.estado]||m.estado}</div>`;
+      <div class="mesa-est">${labels[m.estado]||m.estado}</div>
+      ${ocupada ? `<button class="mesa-liberar" onclick="liberarMesa(event,'${m.id}')">🔓 Liberar</button>` : ''}`;
     d.onclick = () => goMenu(m);
     g.appendChild(d);
   });
   showScreen('mesas');
+}
+
+async function liberarMesa(e, mesaId) {
+  e.stopPropagation();
+  if (!confirm('¿Marcar esta mesa como disponible?')) return;
+  const r = await api('cambiar_estado_mesa', 'POST', {id: mesaId, estado: 'disponible'});
+  if (r.success) goMesas();
+  else alert(r.error || 'No se pudo liberar');
 }
 
 // ── Menu ──
