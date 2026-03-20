@@ -180,6 +180,8 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   <button class="cat-btn active" onclick="showCat('pollo',this)" role="tab" aria-selected="true">🍗 Pollo</button>
   <button class="cat-btn" onclick="showCat('carta',this)" role="tab" aria-selected="false">🥩 Platos a la Carta</button>
   <button class="cat-btn" onclick="showCat('hamburguesas',this)" role="tab" aria-selected="false">🍔 Hamburguesas</button>
+  <button class="cat-btn" onclick="showCat('bebidas',this)" role="tab" aria-selected="false">🥤 Bebidas</button>
+  <button class="cat-btn" onclick="showCat('porciones',this)" role="tab" aria-selected="false">🍟 Porciones</button>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -307,9 +309,9 @@ function renderMenu() {
   const main = document.getElementById('main');
   main.innerHTML = '';
 
-  const cats = ['pollo','carta','hamburguesas'];
-  const catNames = {pollo:'Pollo',carta:'Platos a la Carta',hamburguesas:'Hamburguesas'};
-  const catSubs = {pollo:'Con papa, plátano, arepas y más',carta:'Todo el sabor de Red Rooster',hamburguesas:'Con papas y gaseosa incluidas'};
+  const cats = ['pollo','carta','hamburguesas','bebidas','porciones'];
+  const catNames = {pollo:'Pollo',carta:'Platos a la Carta',hamburguesas:'Hamburguesas',bebidas:'Bebidas',porciones:'Porciones'};
+  const catSubs = {pollo:'Con papa, plátano, arepas y más',carta:'Todo el sabor de Red Rooster',hamburguesas:'Con papas y gaseosa incluidas',bebidas:'Refrescantes y deliciosas',porciones:'Acompañamientos adicionales'};
   const isGold = {};
 
   cats.forEach(cat => {
